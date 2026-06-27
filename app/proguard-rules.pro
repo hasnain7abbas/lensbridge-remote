@@ -1,0 +1,2 @@
+-keep class com.flyfishxu.kadb.** { *; }
+-dontwarn org.bouncycastle.**
