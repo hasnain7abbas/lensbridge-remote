@@ -1,0 +1,23 @@
+LensBridge Remote
+Copyright 2026 LensBridge contributors
+
+This application is licensed under GPL-3.0-or-later. It includes and depends on open-source software:
+
+Kadb 2.1.1
+Copyright Flyfish Xu and contributors
+Apache License 2.0
+https://github.com/flyfishxu/Kadb
+
+spake2-java 1.1.1
+Copyright Flyfish233 and contributors
+GNU General Public License v3.0
+https://github.com/Flyfish233/spake2-java
+
+scrcpy server 4.0
+Copyright 2018 Genymobile; Copyright 2018-2026 Romain Vimont
+Apache License 2.0
+https://github.com/Genymobile/scrcpy
+Bundled server SHA-256: 84924bd564a1eb6089c872c7521f968058977f91f5ff02514a8c74aff3210f3a
+
+AndroidX, Jetpack Compose, Kotlin, Okio, Kotlin Coroutines, Bouncy Castle,
+and their transitive components retain their respective licenses and notices.
