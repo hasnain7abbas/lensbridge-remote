@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.1 — 2026-06-28
+
+- Fixed a preview startup race where a failed abstract-socket open reset the same ADB transport that was running the scrcpy server.
+- Moved the mirror server and video receiver onto independent authenticated ADB transports.
+- Increased the preview startup window and made retries non-destructive.
+- Captured scrcpy server output and now show the real preview failure instead of silently replacing it with the generic shutter-only screen.
+- Added separate Retry preview and Use shutter-only actions.
+
 ## 0.1.0 — 2026-06-27
 
 - Added guided Wireless debugging pairing and connection setup.

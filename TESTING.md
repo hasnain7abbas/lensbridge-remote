@@ -82,9 +82,9 @@ These items remain unchecked until they are run on a controller phone and Samsun
 
 Artifacts:
 
-- `dist/LensBridge-Remote-0.1.0-debug.apk`
-  - SHA-256: `59D85CF7C0FD578029C292611D99E253DCA3B1A522D22641F0CB00E922B3C585`
-- `dist/LensBridge-Remote-0.1.0-release-unsigned.apk`
-  - SHA-256: `51851088366FE6AFF3CBFEA6FBF2CE29D43909EE8D20F92D12FEAD5AB6D10907`
+- `dist/LensBridge-Remote-0.1.1-debug.apk`
+  - SHA-256: `A75F6A735E12CBBDEF56E98CC89E2A797F00B99726ED6CA37560231E357A59C0`
+- `dist/LensBridge-Remote-0.1.1-release-unsigned.apk`
+  - SHA-256: `32A890E7BCF67C5C6A693FAEEA124D082AE8DC398248226DD3DFA77010377C45`
 
 The development machine repeatedly held generated Gradle resource folders open when switching build variants. Each verification gate passed from a freshly cleared `app/build` directory; this was a Windows filesystem lock, not a source, test, lint, or packaging failure.

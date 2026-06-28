@@ -70,9 +70,9 @@ Requirements: JDK 17 and Android SDK 36.
 .\gradlew.bat assembleRelease
 ```
 
-Ready-to-use debug APK: `dist/LensBridge-Remote-0.1.0-debug.apk` (15.6 MB).
+Ready-to-use debug APK: `dist/LensBridge-Remote-0.1.1-debug.apk` (15.6 MB).
 
-Minified unsigned release APK: `dist/LensBridge-Remote-0.1.0-release-unsigned.apk` (3.5 MB).
+Minified unsigned release APK: `dist/LensBridge-Remote-0.1.1-release-unsigned.apk` (3.5 MB).
 
 The debug APK is signed with the local Android debug certificate and installs normally. The release task produces an unsigned, minified APK unless a signing configuration is supplied locally.
 
