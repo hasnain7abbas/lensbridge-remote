@@ -445,8 +445,10 @@ private fun BoxScope.PreviewOverlay(state: RemoteUiState, viewModel: MainViewMod
             icon = { Icon(Icons.Rounded.Warning, null, tint = Warm, modifier = Modifier.size(36.dp)) },
             title = "Preview unavailable",
             body = state.previewState.message,
-            action = "Use shutter-only",
-            onAction = viewModel::toggleShutterOnly
+            action = "Retry preview",
+            onAction = viewModel::restartPreview,
+            secondaryAction = "Use shutter-only",
+            onSecondaryAction = viewModel::toggleShutterOnly
         )
     }
     Row(Modifier.align(Alignment.TopStart).padding(14.dp), horizontalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -668,7 +670,15 @@ private fun CameraModeCard(name: String, detail: String) {
 }
 
 @Composable
-private fun EmptyPreview(icon: @Composable () -> Unit, title: String, body: String, action: String, onAction: () -> Unit) {
+private fun EmptyPreview(
+    icon: @Composable () -> Unit,
+    title: String,
+    body: String,
+    action: String,
+    onAction: () -> Unit,
+    secondaryAction: String? = null,
+    onSecondaryAction: (() -> Unit)? = null
+) {
     Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Color(0xFF142330), Color.Black))), contentAlignment = Alignment.Center) {
         Column(Modifier.padding(28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             icon(); Spacer(Modifier.height(12.dp))
@@ -677,6 +687,9 @@ private fun EmptyPreview(icon: @Composable () -> Unit, title: String, body: Stri
             Text(body, color = Muted, textAlign = TextAlign.Center, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(12.dp))
             TextButton(onClick = onAction) { Text(action, color = LensBlue) }
+            if (secondaryAction != null && onSecondaryAction != null) {
+                TextButton(onClick = onSecondaryAction) { Text(secondaryAction, color = Muted) }
+            }
         }
     }
 }

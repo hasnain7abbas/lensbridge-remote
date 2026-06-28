@@ -29,7 +29,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         _uiState.update { current ->
             current.copy(
                 previewState = preview,
-                shutterOnly = preview is PreviewState.Failed || current.shutterOnly
+                shutterOnly = current.shutterOnly
             )
         }
     }
@@ -233,7 +233,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val surface = attachedSurface ?: return
         if (state.connectionState != ConnectionState.CONNECTED || state.shutterOnly) return
         if (!force && state.previewState is PreviewState.Streaming) return
-        mirror.start(repository.activeClient(), surface, state.previewProfile)
+        val device = state.savedDevice ?: return
+        mirror.start(device.host, device.connectPort, surface, state.previewProfile)
     }
 
     private fun pairingMessage(error: Throwable): String {

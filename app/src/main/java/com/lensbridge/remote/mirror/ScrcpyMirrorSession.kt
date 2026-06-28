@@ -4,8 +4,10 @@ import android.content.Context
 import android.media.MediaCodec
 import android.media.MediaFormat
 import android.os.Build
+import android.util.Log
 import android.view.Surface
 import com.flyfishxu.kadb.Kadb
+import com.flyfishxu.kadb.shell.AdbShellPacket
 import com.flyfishxu.kadb.shell.AdbShellStream
 import com.flyfishxu.kadb.stream.AdbStream
 import com.lensbridge.remote.common.PreviewProfile
@@ -31,22 +33,29 @@ class ScrcpyMirrorSession(
     private val stateCallback: (PreviewState) -> Unit
 ) {
     private var job: Job? = null
+    private var serverLogJob: Job? = null
     @Volatile private var videoStream: AdbStream? = null
     @Volatile private var serverShell: AdbShellStream? = null
+    @Volatile private var serverClient: Kadb? = null
+    @Volatile private var videoClient: Kadb? = null
     @Volatile private var decoder: MediaCodec? = null
+    private val serverLog = StringBuilder()
+    @Volatile private var serverExitCode: Int? = null
 
-    fun start(kadb: Kadb, surface: Surface, profile: PreviewProfile) {
+    fun start(host: String, port: Int, surface: Surface, profile: PreviewProfile) {
         stop()
         stateCallback(PreviewState.Starting)
         job = scope.launch(Dispatchers.IO) {
             try {
-                runSession(kadb, surface, profile)
+                runSession(host, port, surface, profile)
             } catch (_: CancellationException) {
                 // Normal stop.
             } catch (error: Throwable) {
+                Log.e(TAG, "Preview session failed", error)
                 stateCallback(
                     PreviewState.Failed(
-                        error.message?.takeIf { it.isNotBlank() }
+                        readableFailure(error)
+                            .takeIf { it.isNotBlank() }
                             ?: "Preview failed, but shutter-only mode is still available."
                     )
                 )
@@ -63,9 +72,17 @@ class ScrcpyMirrorSession(
         stateCallback(PreviewState.Off)
     }
 
-    private suspend fun runSession(kadb: Kadb, surface: Surface, profile: PreviewProfile) {
+    private suspend fun runSession(host: String, port: Int, surface: Surface, profile: PreviewProfile) {
+        synchronized(serverLog) { serverLog.clear() }
+        serverExitCode = null
+
+        // Keep the long-running server shell on its own ADB transport. A failed
+        // localabstract open may reset Kadb's transport; sharing it would kill the
+        // server before a retry could ever succeed.
+        val launcher = Kadb.create(host, port, connectTimeout = 8_000, socketTimeout = 15_000)
+        serverClient = launcher
         val server = copyServerToCache()
-        kadb.push(server, REMOTE_SERVER_PATH, mode = 0b111101101)
+        launcher.push(server, REMOTE_SERVER_PATH, mode = 0b110100100)
 
         val scid = Random.nextInt(1, Int.MAX_VALUE)
         val scidHex = String.format(Locale.US, "%08x", scid)
@@ -80,25 +97,73 @@ class ScrcpyMirrorSession(
             append(" send_device_meta=false send_codec_meta=true send_frame_meta=true")
             append(" cleanup=true power_off_on_close=false")
         }
-        serverShell = kadb.openShell(command)
+        val shell = launcher.openShell(command)
+        serverShell = shell
+        serverLogJob = scope.launch(Dispatchers.IO) { collectServerOutput(shell) }
 
-        val stream = openVideoStreamWithRetry(kadb, socketName)
+        // A second authenticated transport mirrors an ordinary `adb forward`
+        // data channel and makes socket-startup retries non-destructive.
+        val receiver = Kadb.create(host, port, connectTimeout = 8_000, socketTimeout = 15_000)
+        videoClient = receiver
+        delay(INITIAL_SERVER_GRACE_MS)
+        val stream = openVideoStreamWithRetry(receiver, socketName)
         videoStream = stream
         decode(stream.source, surface)
     }
 
     private suspend fun openVideoStreamWithRetry(kadb: Kadb, socketName: String): AdbStream {
         var lastError: Throwable? = null
-        repeat(30) {
+        repeat(SOCKET_OPEN_ATTEMPTS) {
             coroutineContext.ensureActive()
+            if (serverExitCode != null) {
+                throw IllegalStateException("The preview server stopped before opening the video channel.")
+            }
             try {
                 return kadb.open("localabstract:$socketName")
             } catch (error: Throwable) {
                 lastError = error
-                delay(100)
+                delay(SOCKET_RETRY_DELAY_MS)
             }
         }
         throw IllegalStateException("The preview server did not start. ${lastError?.message.orEmpty()}")
+    }
+
+    private fun collectServerOutput(shell: AdbShellStream) {
+        runCatching {
+            while (true) {
+                when (val packet = shell.read()) {
+                    is AdbShellPacket.StdOut -> appendServerLog(packet.payload.decodeToString())
+                    is AdbShellPacket.StdError -> appendServerLog(packet.payload.decodeToString())
+                    is AdbShellPacket.Exit -> {
+                        serverExitCode = packet.payload.firstOrNull()?.toUByte()?.toInt() ?: -1
+                        return
+                    }
+                }
+            }
+        }.onFailure { error ->
+            if (job?.isActive == true) appendServerLog(error.message.orEmpty())
+        }
+    }
+
+    private fun appendServerLog(text: String) {
+        if (text.isBlank()) return
+        synchronized(serverLog) {
+            serverLog.append(text)
+            if (serverLog.length > MAX_DIAGNOSTIC_CHARS) {
+                serverLog.delete(0, serverLog.length - MAX_DIAGNOSTIC_CHARS)
+            }
+        }
+    }
+
+    private fun readableFailure(error: Throwable): String {
+        val log = synchronized(serverLog) { serverLog.toString().trim() }
+        val detail = log.lineSequence()
+            .map(String::trim)
+            .filter(String::isNotBlank)
+            .lastOrNull()
+            ?.removePrefix("[server] ERROR: ")
+            ?.removePrefix("ERROR: ")
+        return detail ?: error.message.orEmpty()
     }
 
     private suspend fun decode(source: BufferedSource, surface: Surface) = withContext(Dispatchers.IO) {
@@ -192,10 +257,16 @@ class ScrcpyMirrorSession(
 
     @Synchronized
     private fun closeResources() {
+        serverLogJob?.cancel()
+        serverLogJob = null
         videoStream?.runCatching { close() }
         videoStream = null
         serverShell?.runCatching { close() }
         serverShell = null
+        videoClient?.runCatching { close() }
+        videoClient = null
+        serverClient?.runCatching { close() }
+        serverClient = null
         decoder?.runCatching { stop() }
         decoder?.runCatching { release() }
         decoder = null
@@ -209,8 +280,13 @@ class ScrcpyMirrorSession(
         const val H264_CODEC_ID = 0x68323634
         const val PACKET_HEADER_SIZE = 12
         const val MAX_PACKET_SIZE = 8 * 1024 * 1024
+        const val INITIAL_SERVER_GRACE_MS = 750L
+        const val SOCKET_OPEN_ATTEMPTS = 100
+        const val SOCKET_RETRY_DELAY_MS = 100L
+        const val MAX_DIAGNOSTIC_CHARS = 2_000
         const val PACKET_FLAG_CONFIG = 1L shl 62
         const val PACKET_FLAG_KEY_FRAME = 1L shl 61
         const val PACKET_PTS_MASK = PACKET_FLAG_KEY_FRAME - 1
+        const val TAG = "LensBridgePreview"
     }
 }
