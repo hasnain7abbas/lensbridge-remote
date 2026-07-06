@@ -1,5 +1,7 @@
 # LensBridge Remote
 
+[![Android CI](https://github.com/hasnain7abbas/lensbridge-remote/actions/workflows/android-ci.yml/badge.svg)](https://github.com/hasnain7abbas/lensbridge-remote/actions/workflows/android-ci.yml)
+
 LensBridge uses a spare Android phone as a live viewfinder and shutter remote for a Samsung phone on a tripod. Samsung Camera or Expert RAW remains open on the target phone, so its camera modes and image processing are unchanged.
 
 The connection stays on the local Wi-Fi network through Android's user-approved Wireless debugging feature. The app has no account system, cloud service, analytics, or advertising SDK.
