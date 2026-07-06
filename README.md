@@ -1,12 +1,12 @@
 # LensBridge Remote
 
-LensBridge turns a spare Android phone into a live viewfinder and shutter for a Samsung phone on a tripod. The Samsung phone keeps running Samsung Camera or Expert RAW, so Portrait, Portrait Video, Night, Pro, and Astro processing stay where they belong.
+LensBridge uses a spare Android phone as a live viewfinder and shutter remote for a Samsung phone on a tripod. Samsung Camera or Expert RAW remains open on the target phone, so its camera modes and image processing are unchanged.
 
-This is a local tool. There is no account, cloud service, analytics SDK, ad SDK, or hidden capture. Both phones talk over the same Wi-Fi network through Android's user-approved Wireless debugging connection.
+The connection stays on the local Wi-Fi network through Android's user-approved Wireless debugging feature. The app has no account system, cloud service, analytics, or advertising SDK.
 
-> **Hardware status:** the project builds and its local logic is tested, but pairing, key events, and live preview still need to be verified on two physical Android phones before this should be called production-ready. See [TESTING.md](TESTING.md).
+> **Current status:** builds, unit tests, and lint pass. Pairing, key events, and live preview still need verification on two physical Android phones. See [TESTING.md](TESTING.md).
 
-## What is in the first build
+## Features
 
 - Guided six-step setup for Android 11+ Wireless debugging
 - Pairing-code flow with strict input validation; the temporary code is never saved
@@ -15,7 +15,7 @@ This is a local tool. There is no account, cloud service, analytics SDK, ad SDK,
 - Camera Key, Volume Down, and Volume Up shutter methods
 - Off, 3, 5, and 10-second timers with cancellation
 - Paced 3, 5, and 10-shot bursts
-- Video command with honest “command sent” feedback—LensBridge does not invent a recording state
+- Video command reports when the command is sent without assuming the target started recording
 - Real scrcpy 4.0 H.264 screen stream decoded with Android MediaCodec
 - Low, Balanced, and Smooth preview profiles
 - Shutter-only fallback, local composition grid, haptics, and keep-screen-awake
@@ -76,7 +76,7 @@ Minified unsigned release APK: `dist/LensBridge-Remote-0.1.1-release-unsigned.ap
 
 The debug APK is signed with the local Android debug certificate and installs normally. The release task produces an unsigned, minified APK unless a signing configuration is supplied locally.
 
-## Technical shape
+## Architecture
 
 The app is Kotlin + Jetpack Compose with a single state-driven activity. Kadb handles Android-to-Android ADB pairing, shell, sync push, and abstract-socket streams. The mirror client starts the bundled scrcpy 4.0 server with video only, parses its stream/session headers, and queues H.264 packets into MediaCodec without a buffering layer. Camera control remains independent ADB shell input so shutter-only mode continues to work when video is unavailable.
 

@@ -87,4 +87,4 @@ Artifacts:
 - `dist/LensBridge-Remote-0.1.1-release-unsigned.apk`
   - SHA-256: `32A890E7BCF67C5C6A693FAEEA124D082AE8DC398248226DD3DFA77010377C45`
 
-The development machine repeatedly held generated Gradle resource folders open when switching build variants. Each verification gate passed from a freshly cleared `app/build` directory; this was a Windows filesystem lock, not a source, test, lint, or packaging failure.
+On Windows, if a Gradle process holds generated resource directories open between build variants, stop the Gradle daemon and remove `app/build` before rerunning the checks.

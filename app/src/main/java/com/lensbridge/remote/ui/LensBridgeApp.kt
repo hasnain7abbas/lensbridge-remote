@@ -34,12 +34,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowBack
-import androidx.compose.material.icons.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.ArrowBack
+import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.automirrored.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.ExitToApp
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Refresh
 import androidx.compose.material.icons.rounded.Settings
@@ -91,6 +91,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
+import com.lensbridge.remote.BuildConfig
 import com.lensbridge.remote.MainViewModel
 import com.lensbridge.remote.adb.EndpointValidator
 import com.lensbridge.remote.common.ConnectionState
@@ -195,7 +196,7 @@ private fun OnboardingFlow(state: RemoteUiState, viewModel: MainViewModel) {
 private fun OnboardingHeader(step: Int, onBack: () -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (step > 0) {
-            IconButton(onClick = onBack) { Icon(Icons.Rounded.ArrowBack, "Back", tint = Frost) }
+            IconButton(onClick = onBack) { Icon(Icons.AutoMirrored.Rounded.ArrowBack, "Back", tint = Frost) }
         } else BridgeMark(44.dp)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
@@ -541,7 +542,7 @@ private fun SettingsSheet(state: RemoteUiState, viewModel: MainViewModel, onDism
             ToggleRow("Shutter-only mode", "Stop video while keeping controls", state.shutterOnly) { viewModel.toggleShutterOnly() }
             SectionLabel("SESSION")
             OutlinedButton(onClick = { viewModel.disconnect(); onDismiss() }, Modifier.fillMaxWidth()) {
-                Icon(Icons.Rounded.ExitToApp, null); Spacer(Modifier.width(8.dp)); Text("Disconnect")
+                Icon(Icons.AutoMirrored.Rounded.ExitToApp, null); Spacer(Modifier.width(8.dp)); Text("Disconnect")
             }
             Spacer(Modifier.height(8.dp))
             TextButton(onClick = { viewModel.forgetDevice(); onDismiss() }, Modifier.fillMaxWidth()) {
@@ -550,7 +551,7 @@ private fun SettingsSheet(state: RemoteUiState, viewModel: MainViewModel, onDism
             Text("Turn off Wireless debugging on the Samsung phone when you are finished.", style = MaterialTheme.typography.bodyMedium, color = Muted, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(14.dp))
             Text(
-                "LensBridge Remote 0.1.0 · GPL-3.0-or-later · provided without warranty",
+                "LensBridge Remote ${BuildConfig.VERSION_NAME} · GPL-3.0-or-later · provided without warranty",
                 style = MaterialTheme.typography.labelMedium,
                 color = Muted.copy(alpha = .72f),
                 textAlign = TextAlign.Center,
@@ -643,7 +644,7 @@ private fun InfoCard(text: String) {
         Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(LensBlue.copy(alpha = .08f))
             .border(1.dp, LensBlue.copy(alpha = .18f), RoundedCornerShape(16.dp)).padding(14.dp)
     ) {
-        Icon(Icons.Rounded.ArrowForward, null, tint = LensBlue, modifier = Modifier.size(19.dp))
+        Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = LensBlue, modifier = Modifier.size(19.dp))
         Spacer(Modifier.width(10.dp))
         Text(text, style = MaterialTheme.typography.bodyMedium, color = Muted)
     }
